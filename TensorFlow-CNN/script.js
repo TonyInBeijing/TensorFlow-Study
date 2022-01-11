@@ -109,6 +109,45 @@ async function train(model, data) {
     });
 }
 
+// 验证模型
+const classNames = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+// 作出预测
+function doPrediction(model, data, testDataSize = 500) {
+    const IMAGE_WIDTH = 28;
+    const IMAGE_HEIGHT = 28;
+    const testData = data.nextTestBatch(testDataSize);
+    const testxs = testData.xs.reshape([testDataSize, IMAGE_WIDTH, IMAGE_HEIGHT, 1]);
+    const labels = testData.labels.argMax(-1);
+    const preds = model.predict(testxs).argMax(-1);
+
+    testxs.dispose();
+    return [preds, labels];
+}
+// 显示每个类的准确率
+async function showAccuracy(model, data) {
+    const [preds, labels] = doPrediction(model, data);
+    const classAccuracy = await tfvis.metrics.perClassAccuracy(labels, preds);
+    const container = {
+        name: "Accuracy",
+        tab: "Evalution"
+    };
+    tfvis.show.perClassAccuracy(container, classAccuracy, classNames);
+    labels.dispose();
+}
+
+// 显示混淆矩阵
+async function showConfusion(model, data) {
+    const [preds, labels] = doPrediction(model, data);
+    const confusionMatrix = await tfvis.metrics.confusionMatrix(labels, preds);
+    const container = {
+        name: "Confusion Matrix",
+        tab: "Evalution"
+    };
+    tfvis.render.confusionMatrix(container, { values: confusionMatrix, tickLabels: classNames });
+    labels.dispose();
+}
+
+
 async function run() {
     const data = new MnistData();
     await data.load();
@@ -116,6 +155,8 @@ async function run() {
     const model = getModel();
     tfvis.show.modelSummary({ name: "Model Architechtrue", tab: "Model" }, model);
     await train(model, data);
+    await showAccuracy(model, data);
+    await showConfusion(model, data);
 }
 
 document.addEventListener("DOMContentLoaded", run);
