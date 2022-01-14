@@ -2,7 +2,7 @@
  * @description 训练模型
  * @author YHW 2022-01-12
  */
-
+//  https://www.tensorflow.org/js/tutorials/training/nodejs_training?hl=zh-cn
 require("@tensorflow/tfjs-node");
 
 const http = require("http");
